@@ -27,6 +27,7 @@ parser.add_argument("--threshold_accuracy", type=float, default=0.02, help="Thre
 parser.add_argument("--data_path", type=str, default="./data", help="Path to CIFAR-10 data")
 parser.add_argument("--poison_rate", type=float, default=0, help="Rate of poisoning in the dataset (0 to 1)")
 parser.add_argument("--perturb_rate", type=float, default=0, help="Rate of perturbation to apply to model parameters (0 to 1)")
+#parser.add_argument("--isMal", type=bool, default=False, help="Is the client malicious")
 
 args = parser.parse_args()
 
@@ -96,6 +97,17 @@ def test(net, testloader):
 #     trainset = CIFAR10(data_path, train=True, download=True, transform=trf)
 #     testset = CIFAR10(data_path, train=False, download=True, transform=trf)
 #     return DataLoader(trainset, batch_size=32, shuffle=True), DataLoader(testset)
+# def poison_dataset(dataset, poison_rate):
+#     """Poison the dataset by flipping the label of a certain fraction of samples."""
+#     n = len(dataset)
+#     idxs = list(range(n))
+#     np.random.shuffle(idxs)
+#     idxs = idxs[:int(poison_rate * n)]
+#     for i in idxs:
+#         x, y = dataset[i]
+#         y = (y + 1) % 10
+#         dataset.targets[i] = y
+#     return dataset
 
 def load_data(data_path, poison_rate):
     trf = Compose([ToTensor(), Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
@@ -158,7 +170,7 @@ class FlowerClient(fl.client.NumPyClient):
         loss, accuracy = test(net, testloader)
         validity =  1
         if self.previous_loss is not None and self.previous_accuracy is not None:
-            if loss > self.previous_loss + self.threshold_loss or accuracy < self.previosu_accuracy - self.threshold_accuracy:
+            if loss > self.previous_loss + self.threshold_loss or accuracy < self.previous_accuracy - self.threshold_accuracy:
                 validity = 0
         return validity
 
@@ -170,16 +182,22 @@ class FlowerClient(fl.client.NumPyClient):
         try:
             if config["mode"] == 'validate':
                 print("checking Validation")
-                if self.previous_loss is not None and self.previous_accuracy is not None:
-                    if loss > self.previous_loss + self.threshold_loss or accuracy < self.previosu_accuracy - self.threshold_accuracy:
+                if self.previous_loss is not None and self.previous_accuracy is not None and args.poison_rate == 0:
+                    if loss > self.previous_loss + self.threshold_loss or accuracy < self.previous_accuracy - self.threshold_accuracy:
                         validity = 0
+                
+                print("validity"+str(validity))
                 return loss, len(testloader.dataset), {"validity": validity}
 
             else:
                 print('checking evaluation')    
+                self.previous_loss = loss
+                self.previous_accuracy = accuracy
                 print("loss: "+ str(loss) + " accuracy: "+ str(accuracy)) 
                 return loss, len(testloader.dataset), {"accuracy": accuracy}
         except:
+            self.previous_loss = loss
+            self.previous_accuracy = accuracy
             print("loss: "+ str(loss) + " accuracy: "+ str(accuracy)) 
             return loss, len(testloader.dataset), {"accuracy": accuracy}
 
