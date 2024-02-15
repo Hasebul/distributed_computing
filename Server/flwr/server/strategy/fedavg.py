@@ -19,6 +19,7 @@ Paper: arxiv.org/abs/1602.05629
 
 
 from logging import WARNING
+from logging import INFO
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 from flwr.common import (
@@ -303,6 +304,7 @@ class FedAvg(Strategy):
         server_round: int,
         results: List[Tuple[ClientProxy, ValidityRes]],
         failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
+        client_manager: ClientManager,
     ) -> bool:
         """Aggregate fit results using weighted average."""
         if not results:
@@ -313,6 +315,11 @@ class FedAvg(Strategy):
         #if fail in max  voting  then non passing
 
         # Convert results
+        all_clients = [client.cid for client,_ in results]
+        log(INFO, all_clients)
+        log(INFO, all_clients[0])
+        client_manager.print_information_client(all_clients[0])
+        # client_manager.remove_client(all_clients[0])
         weights_results = [validity_res.metrics['validity'] for _,validity_res in results]
         valid = 0
         invalid = 0
@@ -320,6 +327,13 @@ class FedAvg(Strategy):
             if w == 1 : valid += 1
             else : invalid += 1
         if valid > invalid :
-            return True
+            res = True
         else:
-            return False
+            res = False
+            for i in range(len(all_clients)):
+                client = all_clients[i]
+                w = weights_results[i]
+                if w == 1:
+                    client_manager.remove_client(client)
+        # if res is False but if there any client who send validty as 1 disconect them. They are malicious    
+        return res

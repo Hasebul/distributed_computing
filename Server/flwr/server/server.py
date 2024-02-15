@@ -296,9 +296,8 @@ class Server:
             len(failures),
         )
 
-        # Maximum voting
-        aggregated_result: bool = self.strategy.aggregate_validity(server_round, results, failures)
-
+        # Maximum voting 
+        aggregated_result: bool = self.strategy.aggregate_validity(server_round=server_round, results=results, failures=failures, client_manager=self._client_manager)
         return aggregated_result
 
     def disconnect_all_clients(self, timeout: Optional[float]) -> None:

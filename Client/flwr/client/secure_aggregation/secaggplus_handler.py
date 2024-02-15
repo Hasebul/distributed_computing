@@ -29,8 +29,8 @@ from flwr.common import (
     parameters_to_ndarrays,
 )
 from flwr.common.logger import log
-from flwr.common.secure_aggregation.crypto.shamir import create_shares
-from flwr.common.secure_aggregation.crypto.symmetric_encryption import (
+from flwr.common.secure_aggregation.Crypto.shamir import create_shares
+from flwr.common.secure_aggregation.Crypto.symmetric_encryption import (
     bytes_to_private_key,
     bytes_to_public_key,
     decrypt,
