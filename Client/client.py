@@ -152,15 +152,15 @@ class FlowerClient(fl.client.NumPyClient):
         train(net, trainloader, epochs=1)
         return self.get_parameters(config={}), len(trainloader.dataset), {}
     
-    def validity(self, parameters, config):
-        print("Inside checking validity")
-        self.set_parameters(parameters)
-        loss, accuracy = test(net, testloader)
-        validity =  1
-        if self.previous_loss is not None and self.previous_accuracy is not None:
-            if loss > self.previous_loss + self.threshold_loss or accuracy < self.previosu_accuracy - self.threshold_accuracy:
-                validity = 0
-        return validity
+    # def validity(self, parameters, config):
+    #     print("Inside checking validity")
+    #     self.set_parameters(parameters)
+    #     loss, accuracy = test(net, testloader)
+    #     validity =  1
+    #     if self.previous_loss is not None and self.previous_accuracy is not None:
+    #         if loss > self.previous_loss + self.threshold_loss or accuracy < self.previous_accuracy - self.threshold_accuracy:
+    #             validity = 0
+    #     return validity
 
     def evaluate(self, parameters, config):  # validate evaluate
         print(config)
@@ -170,16 +170,23 @@ class FlowerClient(fl.client.NumPyClient):
         try:
             if config["mode"] == 'validate':
                 print("checking Validation")
+                
                 if self.previous_loss is not None and self.previous_accuracy is not None:
-                    if loss > self.previous_loss + self.threshold_loss or accuracy < self.previosu_accuracy - self.threshold_accuracy:
+                    if loss > self.previous_loss + self.threshold_loss or accuracy < self.previous_accuracy - self.threshold_accuracy:
                         validity = 0
+                
                 return loss, len(testloader.dataset), {"validity": validity}
 
             else:
                 print('checking evaluation')    
                 print("loss: "+ str(loss) + " accuracy: "+ str(accuracy)) 
+                self.previous_loss = loss
+                self.previous_accuracy = accuracy
                 return loss, len(testloader.dataset), {"accuracy": accuracy}
         except:
+            print("enter in the exception! May be any problem")
+            self.previous_loss = loss
+            self.previous_accuracy = accuracy
             print("loss: "+ str(loss) + " accuracy: "+ str(accuracy)) 
             return loss, len(testloader.dataset), {"accuracy": accuracy}
 

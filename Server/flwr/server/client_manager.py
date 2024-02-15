@@ -187,6 +187,7 @@ class SimpleClientManager(ClientManager):
         self.wait_for(min_num_clients)
         # Sample clients which meet the criterion
         available_cids = list(self.clients)
+        log(INFO, f"Here we see the number of avail cliden and theri ids {available_cids}")
         if criterion is not None:
             available_cids = [
                 cid for cid in available_cids if criterion.select(self.clients[cid])
@@ -204,3 +205,12 @@ class SimpleClientManager(ClientManager):
 
         sampled_cids = random.sample(available_cids, num_clients)
         return [self.clients[cid] for cid in sampled_cids]
+    
+    def print_information_client(self, client):
+        log(INFO, client)
+        # print(type(client))
+    def remove_client(self, key_to_remove_client):
+        log(INFO, key_to_remove_client)
+        del self.clients[key_to_remove_client]
+        log(INFO, f" removed clients {key_to_remove_client} now len {self.num_available()}")
+        # print(type(client))
